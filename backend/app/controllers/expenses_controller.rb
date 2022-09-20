@@ -14,24 +14,39 @@ class ExpensesController < ApplicationController
   end
 
   def create
-    expense = Expense.create!(expense_params)
+    expense = Expense.new(expense_params)
+
+    ActiveRecord::Base.transaction do
+      expense.save!
+      BalanceTracker::CreateExpense.call(expense)
+    end
+
     render json: expense
   end
 
   def update
     expense = Expense.find(params[:id])
-    expense.update!(expense_params)
+
+    ActiveRecord::Base.transaction do
+      BalanceTracker::UpdateExpense.call(expense, expense_params)
+      expense.update!(expense_params)
+    end
+
     render json: expense
   end
 
   def destroy
     expense = Expense.find(params[:id])
-    expense.destroy
+
+    ActiveRecord::Base.transaction do
+      BalanceTracker::DeleteExpense.call(expense)
+      expense.destroy
+    end
   end
 
   private
 
   def expense_params
-    params.permit(:amount, :date, :description)
+    params.permit(:amount, :date, :description, :account_id)
   end
 end

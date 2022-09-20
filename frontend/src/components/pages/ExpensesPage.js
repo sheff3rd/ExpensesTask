@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import LoadingIndicator from "./LoadingIndicator";
-import ErrorMessage from "./ErrorMessage";
-import request from "../request";
+import LoadingIndicator from "../common/LoadingIndicator";
+import ErrorMessage from "../common/ErrorMessage";
+import request from "../../request";
 import styles from "./ExpensesPage.module.css";
-import Button from "./Button";
+import Button from "../common/Button";
 
 function ExpenseRow({ expense }) {
   return (

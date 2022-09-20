@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useHistory } from "react-router-dom";
-import LoadingIndicator from "./LoadingIndicator";
-import ErrorMessage from "./ErrorMessage";
-import request from "../request";
+import LoadingIndicator from "../common/LoadingIndicator";
+import ErrorMessage from "../common/ErrorMessage";
+import request from "../../request";
 import styles from "./ExpenseEdit.module.css";
-import Button from "./Button";
-import { useNotifications } from "./Notifications";
+import Button from "../common/Button";
+import { useNotifications } from "../common/Notifications";
 
-function ExpenseForm({ expense, onSave, disabled, onDelete }) {
+function ExpenseForm({ accounts, expense, onSave, disabled, onDelete }) {
   const [changes, setChanges] = useState({});
+
+  const _createOptions = () => (
+    accounts.map((account) => (
+      <option value={account.id}>{account.name}</option>
+    ))
+  );
 
   function changeField(field, value) {
     setChanges({
@@ -24,7 +30,7 @@ function ExpenseForm({ expense, onSave, disabled, onDelete }) {
 
   function handleSubmit(event) {
     event.preventDefault();
-    onSave(changes);
+    onSave({ account_id: accounts[0]?.id, ...formData });
   }
 
   return (
@@ -63,6 +69,18 @@ function ExpenseForm({ expense, onSave, disabled, onDelete }) {
             onChange={(event) => changeField("description", event.target.value)}
           />
         </div>
+
+        <div className={styles.formRow}>
+          <label htmlFor="account">Account</label>
+          <select
+            required
+            id="account"
+            value={formData.account_id}
+            onChange={(event) => changeField("account_id", event.target.value)}
+          >
+            {_createOptions()}
+          </select>
+        </div>
       </fieldset>
 
       <div className={styles.formFooter}>
@@ -91,6 +109,7 @@ const defaultExpenseData = {
 function ExpenseEdit() {
   const { id } = useParams();
   const history = useHistory();
+  const [accounts, setAccounts] = useState([])
   const [expense, setExpense] = useState(id ? null : defaultExpenseData);
   const [loadingStatus, setLoadingStatus] = useState(id ? "loading" : "loaded");
   const [isSaving, setSaving] = useState(false);
@@ -100,24 +119,35 @@ function ExpenseEdit() {
   useEffect(
     function () {
       async function loadExpense() {
-        try {
-          const response = await request(`/expenses/${id}`, {
-            method: "GET",
-          });
-          if (response.ok) {
-            setExpense(response.body);
-            setLoadingStatus("loaded");
-          } else {
-            setLoadingStatus("error");
-          }
-        } catch (error) {
+        const response = await request(`/expenses/${id}`, {
+          method: "GET",
+        });
+        if (response.ok) {
+          setExpense(response.body);
+        } else {
           setLoadingStatus("error");
         }
       }
 
-      if (id) {
-        loadExpense();
+      async function loadAccounts() {
+        const response = await request("/accounts", {
+          method: "GET",
+        });
+
+        if (response.ok) {
+          setAccounts(response.body);
+        } else {
+          setLoadingStatus("error");
+        }
       }
+
+      async function fetchData() {
+        await loadAccounts();
+        if (id) await loadExpense();
+        setLoadingStatus("loaded");
+      }
+
+      fetchData();
     },
     [id]
   );
@@ -126,7 +156,7 @@ function ExpenseEdit() {
     try {
       setSaving(true);
       const url = expense.id ? `/expenses/${expense.id}` : "/expenses";
-      const method = expense.id ? "PATCH" : "POST";
+      const method = expense.id ? "PUT" : "POST";
       const body = expense.id ? changes : { ...defaultExpenseData, ...changes };
       const response = await request(url, {
         method,
@@ -173,6 +203,7 @@ function ExpenseEdit() {
     content = (
       <ExpenseForm
         key={expense.updated_at}
+        accounts={accounts}
         expense={expense}
         onSave={handleSave}
         disabled={isSaving || isDeleting}

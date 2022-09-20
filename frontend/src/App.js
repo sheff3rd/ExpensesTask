@@ -7,9 +7,11 @@ import {
   Link,
 } from "react-router-dom";
 import styles from "./App.module.css";
-import ExpensesPage from "./components/ExpensesPage";
-import ExpenseEdit from "./components/ExpenseEdit";
-import Notifications from "./components/Notifications";
+import ExpensesPage from "./components/pages/ExpensesPage";
+import ExpenseEdit from "./components/pages/ExpenseEdit";
+import AccountsPage from "./components/pages/AccountsPage";
+import AccountEdit from './components/pages/AccountEdit';
+import Notifications from "./components/common/Notifications";
 
 function App() {
   return (
@@ -36,6 +38,7 @@ function App() {
               <Route exact path={"/"}>
                 <Redirect to={"/expenses"} />
               </Route>
+
               <Route exact path={"/expenses"}>
                 <ExpensesPage />
               </Route>
@@ -44,6 +47,16 @@ function App() {
               </Route>
               <Route exact path={"/expense/:id"}>
                 <ExpenseEdit />
+              </Route>
+
+              <Route exact path={"/accounts"}>
+                <AccountsPage />
+              </Route>
+              <Route exact path={"/accounts/new"}>
+                <AccountEdit />
+              </Route>
+              <Route exact path={"/account/:id"}>
+                <AccountEdit />
               </Route>
             </Switch>
           </main>
